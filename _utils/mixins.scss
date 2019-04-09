@@ -1,0 +1,424 @@
+@import 'variables';
+
+// ---------------------------------------------------------------------------------------------
+// пересчет из px в rem
+// пример использования: font-size: (16px)
+$rem-baseline: 16px !default;
+$rem-fallback: false !default;
+$rem-px-only: false !default;
+
+@function rem-separator($list, $separator: false) {
+  @if $separator == "comma" or $separator == "space" {
+    @return append($list, null, $separator);
+  }
+
+  @if function-exists("list-separator") == true {
+    @return list-separator($list);
+  }
+
+  // list-separator polyfill by Hugo Giraudel (https://sass-compatibility.github.io/#list_separator_function)
+  $test-list: ();
+  @each $item in $list {
+    $test-list: append($test-list, $item, space);
+  }
+
+  @return if($test-list == $list, space, comma);
+}
+
+@mixin rem-baseline($zoom: 100%) {
+  font-size: $zoom / 16px * $rem-baseline;
+}
+
+@function rem-convert($to, $values...) {
+  $result: ();
+  $separator: rem-separator($values);
+
+  @each $value in $values {
+    @if type-of($value) == "number" and unit($value) == "rem" and $to == "px" {
+      $result: append($result, $value / 1rem * $rem-baseline, $separator);
+    } @else if type-of($value) == "number" and unit($value) == "px" and $to == "rem" {
+      $result: append($result, $value / $rem-baseline * 1rem, $separator);
+    } @else if type-of($value) == "list" {
+      $value-separator: rem-separator($value);
+      $value: rem-convert($to, $value...);
+      $value: rem-separator($value, $value-separator);
+      $result: append($result, $value, $separator);
+    } @else {
+      $result: append($result, $value, $separator);
+    }
+  }
+
+  @return if(length($result) == 1, nth($result, 1), $result);
+}
+
+@function rem($values...) {
+  @if $rem-px-only {
+    @return rem-convert(px, $values...);
+  } @else {
+    @return rem-convert(rem, $values...);
+  }
+}
+
+@mixin rem($properties, $values...) {
+  @if type-of($properties) == "map" {
+    @each $property in map-keys($properties) {
+      @include rem($property, map-get($properties, $property));
+    }
+  } @else {
+    @each $property in $properties {
+      @if $rem-fallback or $rem-px-only {
+        #{$property}: rem-convert(px, $values...);
+      }
+      @if not $rem-px-only {
+        #{$property}: rem-convert(rem, $values...);
+      }
+    }
+  }
+}
+// ---------------------------------------------------------------------------------------------
+// Для РТФ
+@mixin lightGreyText {
+  font-size: 1rem;
+  font-weight: normal;
+  font-style: normal;
+  font-stretch: normal;
+  line-height: normal;
+  letter-spacing: 0.4px;
+  color: $lightGrey;
+}
+
+// Кнопки. По умолчанию синяя с белым текстом.
+@mixin actionButton($background: $blue, $borderC: $blue, $textColor: #fff) {
+  padding: rem(10px 15px);
+  min-width: rem(80px);
+  background: $background;
+  color: $textColor;
+  font-size: 1rem;
+  font-weight: 600;
+  font-style: normal;
+  font-stretch: normal;
+  line-height: normal;
+  letter-spacing: 0.4px;
+  text-align: center;
+  border: 1px solid $borderC;
+  border-radius: $borderRadius;
+  cursor: pointer;
+  pointer-events: auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:disabled {
+    border: 1px solid $borderColor;
+    background-color: $borderColor;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  @media print {
+    display: none;
+  }
+}
+
+// Просто кнопка, белая с чёрным текстом
+@mixin defaultButton() {
+  @include actionButton($white, $borderColor, $darkGrey);
+}
+
+// Круглая кнопка Удалить
+@mixin deleteCircleButton($top: 1rem, $position: static) {
+  position: $position;
+  top: $top;
+  right: 1rem;
+  transition: 0.3s;
+  font-size: 1rem;
+  color: #9b9b9b;
+  cursor: pointer;
+}
+
+// Текстовая кнопка
+@mixin textButton($fontWeight: 400, $color: $blue, $size: 16px) {
+  outline: 0;
+  border: 0;
+  background-color: transparent;
+  font-size: rem($size);
+  font-weight: $fontWeight;
+  color: $color;
+  cursor: pointer;
+}
+
+//Текст для заголовков, жирный темно-серый с опциональным размером
+@mixin titleText($size: 30px, $color: $darkGrey) {
+  font-size: rem($size);
+  font-weight: bold;
+  font-style: normal;
+  line-height: normal;
+  letter-spacing: 0.4px;
+  color: $color;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+// Текст для описаний и комментариев, светло-серый с опциональной жирностью
+@mixin descriptionText($size: 16px, $weight: 400) {
+  font-size: rem($size);
+  font-weight: $weight;
+  letter-spacing: 0.4px;
+  color: $lightGrey;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+// Стандартный нежирный темно-серый текст (текст в копетенциях, информация в профиле)
+@mixin standardText($size: 16px, $color: $darkGrey) {
+  font-size: rem($size);
+  font-weight: 400;
+  font-style: normal;
+  color: $color;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+// Абсолютное позиционирование блока по центру
+@mixin absoluteCenter {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+// ---------------------------------------------------------------------------------------------
+/* Стандартная разметка для кастомного чекбокса
+<div class="custom-checkbox__label">
+	<span class="custom-checkbox__checkmark">
+		<i class="fas fa-check"></i>
+	</span>
+	<span class="custom-checkbox__text">Название чекбокса</span>
+</div>
+*/
+
+// Кастомный контрол (чекбокс)
+@mixin checkboxBody($backColor: #ffffff, $borderColor: #a5adb6) {
+  position: relative;
+  max-width: 1.25rem;
+  min-width: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.125rem;
+  border: 1px solid $borderColor;
+  transition: .3s ease-in-out background-color, .3s ease-in-out border-color;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: $white;
+}
+
+//Галочка для чекбокса
+@mixin checkboxCheck() {
+  opacity: 1;
+  transition: 0.15s;
+  position: absolute;
+}
+
+// Галочка для чекбокса при выборе
+@mixin checkboxBodyChecked($backColor: $blue, $borderColor: $blue) {
+  background-color: $backColor;
+  border-color: $borderColor;
+}
+
+// ---------------------------------------------------------------------------------------------
+/* Стандартная разметка для кастомного радиобаттона
+<div class="custom-radio__label">
+	<span class="custom-radio__checkmark"></span>
+	<span class="custom-radio__text">Название радиобаттона</span>
+</div>
+*/
+
+// Обертка для кастомного радиобаттона
+@mixin radioButtonBody($borderColor: #a5adb6) {
+  display: block;
+  max-width: rem(24px);
+  min-width: rem(24px);
+  width: rem(24px);
+  height: rem(24px);
+  border-radius: 50%;
+  border: 1px solid $borderColor;
+  box-shadow: inset 0 0 0 rem(3px) $white;
+  transition: border-color .3s ease-in-out, background-color .3s ease-in-out;
+  position: relative;
+}
+
+// Обертка для активного кастомного радиобаттона
+@mixin radioButtonBodyChecked($borderColor: $blue) {
+  border-color: $borderColor;
+  background-color: $blue;
+}
+
+//Кнопка-троеточие для открытия доп меню
+@mixin triggerDot($angle: 0) {
+  transform: rotate($angle);
+  cursor: pointer;
+  color: $blue;
+  font-size: 3rem;
+  padding: 0 0.5rem;
+  max-height: 3rem;
+  line-height: 2rem;
+  margin-left: 1rem;
+}
+
+//Галочка для выбора
+@mixin doneIcon() {
+  color: $white;
+  position: absolute;
+  border: 1rem solid transparent;
+  border-top: 1rem solid $blue;
+  border-right: 1rem solid $blue;
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+// ---------------------------------------------------------------------------------------------
+/* Стандартная разметка для текстового инпута
+<input name="textInput" type="text" class="text-input">
+*/
+
+// Текстовый инпут
+@mixin inputText() {
+  padding: rem(10px 15px);
+  @include standardText;
+  border: 1px solid $borderColor;
+  border-radius: $borderRadius;
+}
+
+// Синий текст highlight
+@mixin boldHeading($color: $blue) {
+  color: $color;
+  font-size: rem(20px);
+  font-weight: 600;
+  font-style: normal;
+  font-stretch: normal;
+  letter-spacing: 0.4px;
+}
+
+// Выпадающее меню small
+@mixin dropdownContainer {
+  min-width: rem(300px);
+  padding: rem(10px 0);
+  border-radius: rem(5px);
+  box-shadow: $boxShadow;
+  background-color: #ffffff;
+  z-index: 2;
+}
+
+// Элемент выпадающего меню small
+@mixin dropdownElement($size: 16px) {
+  display: block;
+  outline: 0;
+  border: 0;
+  width: 100%;
+  background: transparent;
+  padding: rem(5px 20px);
+  text-align: left;
+  cursor: pointer;
+  font-size: rem($size);
+  font-weight: normal;
+  letter-spacing: 0.4px;
+  color: $darkGrey;
+  transition: color 0.15s;
+}
+
+// ---------------------------------------------------------------------------------------------
+/* Стандартная разметка для текстового инпута с кнопкой поиска
+<form class="search">
+	<button class="search__action">
+    	<i class="fas fa-search search__icon"></i>
+    </button>
+	<input name="inputName" type="text" class="search__input" placeholder="Поиск" autocomplete="off">
+</form>
+*/
+
+// Обертка для инпута и кнопки
+@mixin searchWrapper() {
+  position: relative;
+}
+
+// Инпут для поиска
+@mixin inputSearch() {
+  width: 100%;
+  padding: rem(10px 15px 10px 40px);
+  @include standardText();
+  border: 1px solid $borderColor;
+  border-radius: $borderRadius;
+}
+
+// Кнопка для поиска
+@mixin buttonSearch() {
+  position: absolute;
+  top: 50%;
+  left: rem(7px);
+  border: 0;
+  background: none;
+  font-size: rem(16px);
+  color: $lightGrey;
+  transform: translateY(-50%);
+}
+
+// Бэкграунд для попапа
+@mixin popupContainer() {
+  position: fixed;
+  z-index: 900;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.5);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+// Обертка для попапа
+@mixin popupWrapper($maxWidth: 1440px) {
+  width: 90%;
+  max-width: $maxWidth;
+  height: auto;
+  min-height: auto;
+  max-height: 90%;
+  overflow-y: auto;
+  padding: 1.875rem;
+  border-radius: 13.5px;
+  background: #fff;
+  position: relative;
+}
+
+// Строка текста с растворением в конце
+@mixin lineEndFadeOut($backColor: $white) {
+  white-space: nowrap;
+  &:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 20%;
+    height: 100%;
+    pointer-events: none;
+    background-size: 100%;
+    background-image: linear-gradient(to right, $transparent, $backColor);
+  }
+}
+
+// Подпись для поля ввода
+@mixin inputLabel() {
+  font-weight: 600;
+}
+
+// Гиперссылка
+@mixin link($color: $blue) {
+  color: $color;
+  text-decoration: none;
+  &:focus {
+    outline: none;
+  }
+}
