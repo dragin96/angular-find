@@ -17,6 +17,7 @@ import {
 } from '@angular/material';
 import { Ng5SliderModule } from 'ng5-slider';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @NgModule({
   imports:      [
@@ -40,7 +41,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     FormsModule,
     MatChipsModule,
     MatRadioModule,
-    BrowserAnimationsModule
+    BrowserAnimationsModule,
+    FontAwesomeModule
   ],
   declarations: [ AppComponent, HelloComponent ],
   bootstrap:    [ AppComponent ]

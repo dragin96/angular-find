@@ -2,7 +2,9 @@
 <form class="form">
   <mat-form-field class="search">
     <mat-icon>
-      <i class="fas fa-search"></i>
+      <!-- У нас используем то  что в комнтах -->
+      <!-- <i class="fas fa-search"></i> -->
+      <fa-icon [icon]="faSearch"></fa-icon>
     </mat-icon>
     <input type="text" placeholder="Поиск" aria-label="Number" matInput
           [formControl]="myControl"
